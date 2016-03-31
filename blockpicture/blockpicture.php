@@ -1,4 +1,9 @@
 <?php
+/**
+ *
+ * @author RObin Guzniczak <robin.guzniczak@gmail.com>
+ */
+
 if (!defined('_PS_VERSION_'))
     exit;
 
@@ -65,10 +70,13 @@ class BlockPicture extends Module
         {
             $valid_image = true;
             /* Handle direct URL */
-            if (empty($_FILES['BLOCKPICTURE_FILE']['tmp_name'])) {
+        if (!isset($_FILES['BLOCKPICTURE_FILE']) ||
+          !isset($_FILES['BLOCKPICTURE_FILE']['tmp_name']) ||
+          empty($_FILES['BLOCKPICTURE_FILE']['tmp_name'])) {
                 $url = strval(Tools::getValue('BLOCKPICTURE_URL'));
                 if (!$url || empty($url))
                     $output .= $this->displayError($this->l('Invalid Url'));
+                /* It could also be interesting to check that the url points to a valid file */
                 else
                 {
                     Configuration::updateValue('BLOCKPICTURE_URL', $url);
@@ -81,14 +89,12 @@ class BlockPicture extends Module
                 {
                 $image_dir = dirname(__FILE__) . '/images/';
                 $temp_name = image_dir . $_FILES['BLOCKPICTURE_FILE']['name'];
-                $salt = sha1(microtime());
+                $salt = sha1(microtime()); /* not sure this is really necessary */
                 $target_name = $salt . '_' . $_FILES['BLOCKPICTURE_FILE']['name'];
                 $file_type = Tools::strtolower(pathinfo($temp_name, PATHINFO_EXTENSION));
-                $imagesize = @getimagesize($_FILES['BLOCKPICTURE_FILE']['tmp_name']);
+                $imagesize = getimagesize($_FILES['BLOCKPICTURE_FILE']['tmp_name']);
                 /* Check validity of image */
-                if (!isset($_FILES['BLOCKPICTURE_FILE']) ||
-                  !isset($_FILES['BLOCKPICTURE_FILE']['tmp_name']) ||
-                  empty($_FILES['BLOCKPICTURE_FILE']['tmp_name']))
+                if ($imagesize === false)
                     $output .= $this->displayError($this->l('Invalid image'));
                 elseif (!in_array($file_type, array('jpg', 'jpeg', 'gif', 'png', 'svg')))
                     $output .= $this->displayError($this->l('Only png, jpg, jpeg, gif and svg files are allowed'));
